@@ -1,0 +1,28 @@
+mkdir my_directory
+Changing Directory:
+
+bash
+Copy code
+cd my_directory
+Creating a File:
+
+bash
+Copy code
+touch my_file.txt
+Editing a File (Using Nano Text Editor):
+
+bash
+Copy code
+nano my_file.txt
+Inside Nano, you can edit the file content. Press Ctrl + X to exit, Y to confirm changes, and then press Enter to save.
+
+Displaying File Content:
+
+bash
+Copy code
+cat my_file.txt
+Removing a File:
+
+bash
+Copy code
+rm my_file.txt
