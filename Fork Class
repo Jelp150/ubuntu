@@ -1,0 +1,23 @@
+Commands Terminal:
+
+1: command cd   //   cd ~/Desktop/Fork\ Files
+2: command touch  //  touch fork.c
+3: command nano    //  nano fork.c
+4: command clear      //   clear
+5: command man     //   man (other command)  // Stands for manual
+6: command gcc     //   gcc -o fork fork.c
+7: command ./     //   ./fork
+
+: command ps  //   ps 
+: command ps -al  //   ps -al
+
+
+Commands C file:
+
+1: datatype pid_t  //  pid_t ret_value
+2: %d   //  in printf we need to sepecify the datatype
+3: command getpid()  // getpid()
+4: fork    //    fork()
+5: sleep    //  sleep (10)
+6: kill    //   kill(ret_value, SIGTERM)
+7: wait     //   wait()
