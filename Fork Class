@@ -23,3 +23,46 @@ Commands C file:
 7: wait     //   wait()
 8: scanf   //   scanf("%d", &n)    Read integer datatype n name
 9: scanf   //   scanf("%d%d", &a, &b)    Read 2 integer datatype a,b name
+
+
+Code:
+
+#include<stdio.h>
+#include<unistd.h>
+#include<signal.h>
+
+int main()
+{
+pid_t ret_value;
+printf("\nThe process id is %d\n",getpid());
+ret_value = fork();
+if (ret_value<0)
+{
+	//fork has failed
+	printf("\nFork Failure\n");
+}
+else if (ret_value==0)
+{
+	//child process
+	//Find if a number is even or odd.
+	printf("\nChild Process\n");
+	printf("The process id is %d\n",getpid());
+	printf("The process id is %d\n",getpid());
+	printf("ret_value: %d\n", ret_value);
+	sleep(60);
+}
+else
+{
+	//parent process
+	// Find the maximum between 2 numbers
+	//wait();
+	printf("Parent Process\n");
+	printf("The process id is %d\n",getpid());
+	printf("ret_value: %d\n", ret_value);
+	//sleep(100);
+	kill(ret_value, SIGTERM);
+	//sleep(10);
+}
+return 0;
+}
+
