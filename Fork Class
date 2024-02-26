@@ -21,3 +21,5 @@ Commands C file:
 5: sleep    //  sleep (10)
 6: kill    //   kill(ret_value, SIGTERM)
 7: wait     //   wait()
+8: scanf   //   scanf("%d", &n)    Read integer datatype n name
+9: scanf   //   scanf("%d%d", &a, &b)    Read 2 integer datatype a,b name
