@@ -28,7 +28,7 @@ int main() {
             printf("The child process won the race and the value is: %d\n", *shared_variable);
         }
     } else {
-        wait(NULL);
+        //wait(NULL);
 if(*shared_variable==0)
         {
             *shared_variable=2;
