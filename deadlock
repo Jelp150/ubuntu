@@ -1,1 +1,55 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/mman.h>
 
+int main() {
+    int *flag0;  // Pointer to the shared variable
+    int *flag1;  // Pointer to the shared variable
+
+    // Create a shared memory region
+    flag0 = mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    flag1 = mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+
+    if (flag0 == MAP_FAILED) {
+        perror("mmap");
+        exit(EXIT_FAILURE);
+    }
+    if (flag1 == MAP_FAILED) {
+        perror("mmap");
+        exit(EXIT_FAILURE);
+    }
+
+    *flag0=0;
+    *flag1=0;
+    // Fork a child process
+    pid_t child_pid = fork();
+
+    if (child_pid == -1) {
+        perror("fork");
+        exit(EXIT_FAILURE);
+    } else if (child_pid == 0) {
+        // Child process
+      *flag0=1;
+      while(*flag1==1)
+      {
+      }
+    } else {
+        // Parent process
+        *flag1=1;
+         while(*flag0==1)
+          {
+          }
+        // Wait for the child to terminate
+        wait(NULL);
+
+        printf("Parent process: Value of shared variable after child's modification: %d\n", *shared_variable);
+
+        // Modify the value of the shared variable in the parent
+        *shared_variable = 456;
+
+        printf("Parent process: Modified value of shared variable: %d\n", *shared_variable);
+    }
+
+    return 0;
+}
