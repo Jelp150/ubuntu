@@ -1,1 +1,4 @@
-
+1st. Open Ubuntu Version 22.
+2nd. Open a terminal and run "sudo apt update".
+3rd. After it finished run "Sudo apt install gcc".
+4th. Say yes to the "Do you want to continue?" question.
