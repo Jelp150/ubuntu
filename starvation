@@ -49,9 +49,10 @@ int main() {
             // Child waits until shared_variable is 1
             while (*shared_variable == 0)
             {
-            	sleep(1);
+            	kill(getppid(), SIGCONT);
             }
             printf("Child process is currently executing...\n");
+            kill(getppid(), SIGCONT);
             sleep(1); 
         }
     } else {
@@ -67,9 +68,10 @@ int main() {
             while (true) {
             	while (*shared_variable == 0)
             	{
-            		wait();
+            		kill(getppid(), SIGCONT);
             	}
                 printf("Unused process is currently executing...\n");
+                kill(getppid(), SIGCONT);
                 sleep(5); 
             }
         } else {
@@ -78,15 +80,14 @@ int main() {
             while (true) {
             	while (*shared_variable == 0)
             	{
-                kill(unused_pid, SIGCONT);
-            		sleep(10);
+            		kill(unused_pid, SIGCONT);
            	 }
 
             printf("Parent process is currently executing...\n");
-            sleep(1);
+            kill(child_pid, SIGCONT);
+            sleep(10);
             }
         }
     }
-
     return 0;
 }
