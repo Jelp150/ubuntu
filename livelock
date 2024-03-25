@@ -2,26 +2,35 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <signal.h>
+
+// Signal handler for SIGCONT
+void sigcont_handler_parent(int signum) {
+    // Print a message indicating that the SIGCONT signal was received
+    printf("Parent process: Received SIGCONT signal\n");
+}
+
+void sigcont_handler_child(int signum) {
+    // Print a message indicating that the SIGCONT signal was received
+    printf("Child process: Received SIGCONT signal\n");
+}
 
 int main() {
-    int *flag0;  // Pointer to the shared variable
-    int *flag1;  // Pointer to the shared variable
+    int *shared_variable1;  // Pointer to the shared variable
+    int *shared_variable2;  // Pointer to the shared variable
 
     // Create a shared memory region
-    flag0 = mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-    flag1 = mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    shared_variable1 = mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    shared_variable2 = mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    
+    *shared_variable1=0; 
+    *shared_variable2=0; 
 
-    if (flag0 == MAP_FAILED) {
+    if (shared_variable1 == MAP_FAILED || shared_variable2 == MAP_FAILED) {
         perror("mmap");
         exit(EXIT_FAILURE);
     }
-    if (flag1 == MAP_FAILED) {
-        perror("mmap");
-        exit(EXIT_FAILURE);
-    }
 
-    *flag0=1;
-    *flag1=1;
     // Fork a child process
     pid_t child_pid = fork();
 
@@ -30,31 +39,24 @@ int main() {
         exit(EXIT_FAILURE);
     } else if (child_pid == 0) {
         // Child process
-      while(*flag1==1)
-      {
-                *flag0=0;
-                printf("Child process is executing.");
-                *flag0=1;
-                sleep(1);
-      }
-        //CRITICAL SECTION
-      *flag0=0;
+        signal(SIGCONT, sigcont_handler_child);
+        while (*shared_variable1 == 1) {
+            *shared_variable2 = 1;
+            printf("Child process: Sending SIGCONT to parent\n");
+            *shared_variable2 = 0;
+            kill(getppid(), SIGCONT);
+            sleep(10);
+        }
     } else {
         // Parent process
-        *flag1=1;
-         while(*flag0==1)
-          {
-                *flag1=0;
-                printf("Parent process is executing.");
-                *flag1=1;
-                sleep(1);
-          }
-        //CRITICAL SECTION
-        *flag1=0;
-        // Wait for the child to terminate
-        //wait(NULL);
-
-        //printf("Parent process: Modified value of shared variable: %d\n", *shared_variable);
+        signal(SIGCONT, sigcont_handler_parent);
+        while (*shared_variable2 == 0) {
+            *shared_variable1 = 0;
+            printf("Parent process: Sending SIGCONT to child\n");
+            *shared_variable1 = 1;
+            kill(child_pid, SIGCONT);
+            sleep(10);
+        }
     }
 
     return 0;
