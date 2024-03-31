@@ -1,1 +1,65 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/mman.h>
+#include <signal.h>
+#include <stdbool.h>
+#include <sys/wait.h>
+#include <semaphore.h>
+#include <fcntl.h>
 
+int main() {
+    int *balance;  // Pointer to the shared variable
+    sem_t *mutex;  // Semaphore
+
+    // Create a shared memory region for balance
+    balance = mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    if (balance == MAP_FAILED) {
+        perror("mmap");
+        exit(EXIT_FAILURE);
+    }
+    *balance = 100; // Initial balance
+    
+    // Create a shared memory region for the semaphore
+    mutex = mmap(NULL, sizeof(sem_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    if (mutex == MAP_FAILED) {
+        perror("mmap");
+        exit(EXIT_FAILURE);
+    }
+    
+    // Initialize the semaphore
+    if (sem_init(mutex, 1, 1) != 0) {
+        perror("sem_init");
+        exit(EXIT_FAILURE);
+    }
+
+    // Fork a child process
+    pid_t child_pid = fork();
+
+    if (child_pid == -1) {
+        perror("fork");
+        exit(EXIT_FAILURE);
+    } else if (child_pid == 0) {
+        printf("Child Process (%d) attempting to withdraw...\n", getpid());
+        sem_wait(mutex); // Acquire semaphore
+        *balance -= 50; // Withdraw 50 from the balance
+        printf("Child Process (%d) successfully withdrawn 50. New balance: %d\n", getpid(), *balance);
+        sem_post(mutex); // Release semaphore
+    } else {
+        printf("Parent Process (%d) attempting to deposit...\n", getpid());
+        sem_wait(mutex); // Acquire semaphore
+        *balance += 100; // Deposit 100 into the balance
+        printf("Parent Process (%d) successfully deposited 100. New balance: %d\n", getpid(), *balance);
+        sem_post(mutex); // Release semaphore
+      
+    }
+
+    // Destroy the semaphore
+    sem_destroy(mutex);
+    
+    // Unmap shared memory regions
+    munmap(balance, sizeof(int));
+    munmap(mutex, sizeof(sem_t));
+    
+    return 0;
+}
