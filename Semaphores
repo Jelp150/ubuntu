@@ -1,7 +1,7 @@
 #include <semaphore.h>
 #include <fcntl.h>
 
-    sem_t *mutex;  // Semaphore
+    sem_t mutex;  // Semaphore
     
     // Initialize the semaphore
     if (sem_init(mutex, 1, 1) != 0) 
