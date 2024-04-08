@@ -34,24 +34,62 @@ int main() {
     }
 
     // Fork a child process
-    pid_t child_pid = fork();
+    pid_t child_pid = fork();        
 
-    if (child_pid == -1) {
+    if (child_pid == -1) 
+    {
         perror("fork");
         exit(EXIT_FAILURE);
-    } else if (child_pid == 0) {
-        printf("Child Process (%d) attempting to withdraw...\n", getpid());
-        sem_wait(mutex); // Acquire semaphore
-        *balance -= 50; // Withdraw 50 from the balance
-        printf("Child Process (%d) successfully withdrawn 50. New balance: %d\n", getpid(), *balance);
-        sem_post(mutex); // Release semaphore
-    } else {
-        printf("Parent Process (%d) attempting to deposit...\n", getpid());
-        sem_wait(mutex); // Acquire semaphore
-        *balance += 100; // Deposit 100 into the balance
-        printf("Parent Process (%d) successfully deposited 100. New balance: %d\n", getpid(), *balance);
-        sem_post(mutex); // Release semaphore
-      
+    } 
+    else if (child_pid == 0) 
+    {
+    	pid_t second_child_pid = fork();
+    	if (second_child_pid == -1) 
+    	{
+        	perror("fork");
+        	exit(EXIT_FAILURE);
+        }
+        else if (second_child_pid == 0) 
+        {    	
+        	printf("Process 4 (%d) attempting to withdraw...\n", getpid());
+        	sem_wait(mutex); // Acquire semaphore
+        	*balance -= 50; // Withdraw 50 from the balance
+        	printf("Process 4 (%d) successfully withdrawn 50. New balance: %d\n", getpid(), *balance);
+        	sem_post(mutex); // Release semaphore
+        }
+        else 
+        {
+        	printf("Process 3 (%d) attempting to deposit...\n", getpid());
+        	sem_wait(mutex); // Acquire semaphore
+        	*balance += 100; // Deposit 100 into the balance
+        	printf("Process 3 (%d) successfully deposited 100. New balance: %d\n", getpid(), *balance);
+        	sem_post(mutex); // Release semaphore	
+        }
+    }
+    else 
+    { 
+    	pid_t second_child_pid = fork();
+    	if (second_child_pid == -1) 
+    	{
+        	perror("fork");
+        	exit(EXIT_FAILURE);
+        }
+        else if (second_child_pid == 0) 
+        {    	
+        	printf("Process 2 (%d) attempting to deposit...\n", getpid());
+        	sem_wait(mutex); // Acquire semaphore
+        	*balance += 100; // Deposit 100 into the balance
+        	printf("Process 2 (%d) successfully deposited 100. New balance: %d\n", getpid(), *balance);
+        	sem_post(mutex); // Release semaphore	
+        }
+        else 
+        {
+        	printf("Process 1 (%d) attempting to deposit...\n", getpid());
+        	sem_wait(mutex); // Acquire semaphore
+        	*balance += 100; // Deposit 100 into the balance
+        	printf("Process 1 (%d) successfully deposited 100. New balance: %d\n", getpid(), *balance);
+        	sem_post(mutex); // Release semaphore	
+        }
     }
 
     // Destroy the semaphore
