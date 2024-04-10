@@ -1,1 +1,106 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/mman.h>
+#include <signal.h>
+#include <stdbool.h>
+#include <sys/wait.h>
+#include <semaphore.h>
+#include <fcntl.h>
 
+#define BUFFER_SIZE 5
+
+int main() {
+    int *buffer;  // Pointer to the shared buffer
+    sem_t *empty_slots, *filled_slots, *mutex;  // Semaphores
+   
+    // Create a shared memory region for the buffer
+    buffer = mmap(NULL, BUFFER_SIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    if (buffer == MAP_FAILED) {
+        perror("mmap");
+        exit(EXIT_FAILURE);
+    }
+   
+    // Create a shared memory region for semaphores
+    empty_slots = mmap(NULL, sizeof(sem_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    filled_slots = mmap(NULL, sizeof(sem_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    mutex = mmap(NULL, sizeof(sem_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    if (empty_slots == MAP_FAILED || filled_slots == MAP_FAILED || mutex == MAP_FAILED) {
+        perror("mmap");
+        exit(EXIT_FAILURE);
+    }
+   
+    // Initialize semaphores
+    if (sem_init(empty_slots, 1, BUFFER_SIZE) != 0 || sem_init(filled_slots, 1, 0) != 0 || sem_init(mutex, 1, 1) != 0) {
+        perror("sem_init");
+        exit(EXIT_FAILURE);
+    }
+
+    // Fork child processes
+    pid_t child_pid = fork();        
+
+    if (child_pid == -1) {
+        perror("fork");
+        exit(EXIT_FAILURE);
+    } else if (child_pid == 0) {
+        // Consumer process
+        while (true) {
+            sem_wait(filled_slots); // Wait for at least one filled slot
+            sem_wait(mutex); // Acquire mutex
+            int item = buffer[0]; // Consume item from buffer
+            for (int i = 0; i < BUFFER_SIZE - 1; ++i) {
+                buffer[i] = buffer[i + 1]; // Shift items in buffer
+            }
+            printf("Consumer (%d) consumed item: %d\n", getpid(), item);
+            sem_post(mutex); // Release mutex
+            sem_post(empty_slots); // Increment empty slot count
+            sleep(5); // Simulate processing time
+        }
+    } else {
+        // Producer process
+            pid_t second_child_pid = fork();  
+            if(second_child_pid==0)
+            {        while (true) {
+            sem_wait(empty_slots); // Wait for at least one empty slot
+            sem_wait(mutex); // Acquire mutex
+            int item = rand() % 100; // Generate random item
+            for (int i = BUFFER_SIZE - 1; i > 0; --i) {
+                buffer[i] = buffer[i - 1]; // Shift items in buffer
+            }
+            buffer[0] = item; // Produce item into buffer
+            printf("Producer (%d) produced item: %d\n", getpid(), item);
+            sem_post(mutex); // Release mutex
+            sem_post(filled_slots); // Increment filled slot count
+            sleep(1); // Simulate production time
+        }}
+            else
+            {        while (true) {
+            sem_wait(empty_slots); // Wait for at least one empty slot
+            sem_wait(mutex); // Acquire mutex
+            int item = rand() % 100+10; // Generate random item
+            for (int i = BUFFER_SIZE - 1; i > 0; --i) {
+                buffer[i] = buffer[i - 1]; // Shift items in buffer
+            }
+            buffer[0] = item; // Produce item into buffer
+            printf("Producer (%d) produced item: %d\n", getpid(), item);
+            sem_post(mutex); // Release mutex
+            sem_post(filled_slots); // Increment filled slot count
+            sleep(1); // Simulate production time
+        }}
+                 
+
+    }
+
+    // Destroy semaphores
+    sem_destroy(empty_slots);
+    sem_destroy(filled_slots);
+    sem_destroy(mutex);
+   
+    // Unmap shared memory regions
+    munmap(buffer, BUFFER_SIZE * sizeof(int));
+    munmap(empty_slots, sizeof(sem_t));
+    munmap(filled_slots, sizeof(sem_t));
+    munmap(mutex, sizeof(sem_t));
+   
+    return 0;
+}
