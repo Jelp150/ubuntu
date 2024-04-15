@@ -1,7 +1,7 @@
 // C++ code
 //
 #include <LiquidCrystal_I2C.h>
-LiquidCrystal_I2C lcd(0x27,20,4);
+LiquidCrystal_I2C lcd(0x27,20,2);
 
 byte playerChar[] = {
   B01110,
@@ -20,36 +20,44 @@ char player_char;
 char frame1[16];
 char frame2[16];
 int speed=1500;
+int score=0;
  
-  
+void gameover()
+{
+    lcd.clear();
+    lcd.print("Game Over.");
+    delay(2000);
+    lcd.noDisplay();
+    lcd.noBacklight();
+}
+
+void display_menu()
+{
+  Serial.println("Press 'y' to start or 'z' to see the score.");
+}
 
 void setup()
 {
   lcd.createChar(player_char, playerChar);
+  randomSeed(analogRead(A0));
+  int rand1=random(0,16);
+  int rand2=random(0,2);
   for(int i=0; i<16;i++)
   {
-    if(i==0||i==1||i==4||i==6)
+    if(i==rand1 && rand2==1)
+    {
+      frame1[i]=player_char;
+      frame2[i]=obs_char;
+    }
+    else if(i==rand1 && rand2==0)
     {
       frame1[i]=obs_char;
-    }
-    else
-    {
-    frame1[i]=space_char;
-    }
-  }
-  for(int i=0; i<16;i++)
-  {
-    if(i==0)
-    {
       frame2[i]=player_char;
     }
-    else if(i>10)
-    {
-    frame2[i]=obs_char;
-    }
     else
     {
-      frame2[i]=space_char;
+      frame1[i]=obs_char;
+      frame2[i]=obs_char;
     }
   }
   Serial.begin(9600);
@@ -58,6 +66,8 @@ void setup()
   lcd.clear();
   lcd.setCursor(0,0);
   lcd.print("****JL Game****"); //message on lcd display
+  Serial.println("Welcome to JL Game");
+  display_menu();
   delay(2000);
   lcd.clear();
   lcd.print("Press y to Start");
@@ -95,6 +105,10 @@ void loop()
   char user_option=Serial.read();
   switch(user_option)
   {
+    case 'z':
+    Serial.print("Your score is: ");
+    Serial.println(score);
+    break;
     case 'w':
     for(int i=0; i<16;i++)
     {
@@ -111,11 +125,7 @@ void loop()
           }
           else
           {
-            lcd.clear();
-            lcd.print("Game Over.");
-            delay(2000);
-            lcd.noDisplay();
-            lcd.noBacklight();
+			gameover();
           }
       }
     }
@@ -136,11 +146,7 @@ void loop()
         }
         else
         {
-          lcd.clear();
-          lcd.print("Game Over.");
-          delay(2000);
-          lcd.noDisplay();
-          lcd.noBacklight();
+		  gameover();
         }
       }
       else if(frame2[i]==player_char)
@@ -152,11 +158,7 @@ void loop()
         }
         else
         {
-          lcd.clear();
-          lcd.print("Game Over.");
-          delay(2000);
-          lcd.noDisplay();
-          lcd.noBacklight();
+		  gameover();
         }     
       }
     }
@@ -178,11 +180,7 @@ void loop()
           }
           else
           {
-            lcd.clear();
-            lcd.print("Game Over.");
-            delay(2000);
-            lcd.noDisplay();
-            lcd.noBacklight();
+			gameover();
           }
       }
     }
@@ -204,11 +202,7 @@ void loop()
           }
        	  else 
           {
-             lcd.clear();
-         	 lcd.print("Game Over.");
-         	 delay(2000);
-         	 lcd.noDisplay();
-         	 lcd.noBacklight();
+			gameover();
           }
       }
       else if(frame2[i]==player_char)
@@ -221,11 +215,7 @@ void loop()
         }
         else
         {
-          lcd.clear();
-          lcd.print("Game Over.");
-          delay(2000);
-          lcd.noDisplay();
-          lcd.noBacklight();
+		  gameover();
         }     
       }
        else
@@ -253,29 +243,42 @@ void loop()
   {
     frame2[0]=space_char;
   }
-  for(int i=1;i<15;i++)
+  for(int i=1;i<16;i++)
   {
+    
     if(frame1[i]==obs_char)
     {
+      if(frame1[i-1]==player_char)
+      {
+        gameover();
+      }
+      else
+      {
     	frame1[i-1]=frame1[i];
         frame1[i]=space_char;
-    
-      
+      }
     }
     else if (frame2[i]==obs_char)
     {
+      if(frame2[i-1]==player_char)
+      {
+        gameover();
+      }
+      else
+      {
           frame2[i-1]=frame2[i];
           frame2[i]=space_char;
+      }
     }
   }
   int rand1=random(0,3);
   int rand2=random(0,3);
-  if(rand1==0)
+  if(rand1==0&&frame2[14]!=obs_char)
   {
    frame1[15]=obs_char;
    frame2[15]=space_char;
   }
-  else if(rand2==0)
+  else if(rand2==0&&frame1[14]!=obs_char)
   {
    frame1[15]=space_char;
    frame2[15]=obs_char;
@@ -285,6 +288,5 @@ void loop()
    frame1[15]=space_char;
    frame2[15]=space_char;
   }
-
-  
+  score+=1;
 }
