@@ -44,6 +44,9 @@ void setup()
   int rand2=random(0,2);
   for(int i=0; i<16;i++)
   {
+    randomSeed(analogRead(A0));
+    int rand3=random(0,2);
+    int rand4=random(0,2);
     if(i==rand1 && rand2==1)
     {
       frame1[i]=player_char;
@@ -56,10 +59,40 @@ void setup()
     }
     else
     {
-      frame1[i]=obs_char;
-      frame2[i]=obs_char;
+      if(rand3==0)
+      {
+        if(frame2[i-1]!=obs_char)
+        {
+        	frame1[i]=obs_char;
+        }
+        else
+        {
+          frame1[i]=space_char;
+        }
+      }
+      else
+      {
+        frame1[i]=space_char;
+      }
+        if(rand4==0)
+      {
+        if(frame1[i-1]!=obs_char && frame1[i]!=obs_char)
+        {
+        	frame2[i]=obs_char;
+        }
+        else
+        {
+          frame2[i]=space_char;
+        }
+      }
+      else
+      {
+        frame2[i]=space_char;
+      }
+  
     }
   }
+  
   Serial.begin(9600);
   lcd.init();
   lcd.backlight();
